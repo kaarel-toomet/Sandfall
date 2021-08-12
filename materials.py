@@ -89,7 +89,7 @@ class Liquid(Material):
 
 class Gas(Material):
     def update(self, cells, dimx, dimy):
-        self.move(cells, dimy, dimx)
+        self.rise(cells, dimy, dimx)
         #return
 
     def rise(self, cells, dimy, dimx):
@@ -136,15 +136,34 @@ class Gas(Material):
         cell_6 = get_cell(x+1, y, cells, dimx, dimy)      #123
         cell_8 = get_cell(x, y-1, cells, dimx, dimy)
         empty = [False,False,cell_2 == 0, False, cell_4 == 0, False, cell_6 == 0, False, cell_8 == 0]
+
+        c = 3
+        if empty[2]:
+            if randint(0,c) == 0:
+                self.y += 1
+                return
+            else:
+                c -= 1
+        if empty[4]:
+            if randint(0,c) == 0:
+                self.x -= 1
+                return
+            else:
+                c -= 1
+        if empty[6]:
+            if randint(0,c) == 0:
+                self.x += 1
+                return
+            else:
+                c -= 1
+        if empty[8]:
+            if randint(0,c) == 0:
+                self.y -= 1
+                return
+            else:
+                c -= 1
         
-        if empty[2] and randint(0,3) == 0:
-            self.y += 1
-        elif empty[4] and randint(0,2) == 0:
-            self.x -= 1
-        elif empty[6] and randint(0,1) == 0:
-            self.x += 1
-        elif empty[8]:
-            self.y -= 1
+
 
 
 class Solid(Material):
@@ -181,12 +200,12 @@ class Water(Liquid):
 class SawGas(Gas):
     name = "sawgas"
     color = (0, 100, 0)
-    flammability = 100
-    def update(self, cells, dimx, dimy):
-        if randint(0,2) == 0:
-            self.rise(cells,dimx,dimy)
-        else:
-            self.diffuse(cells, dimx, dimy)
+    flammability = 20
+##    def update(self, cells, dimx, dimy):
+##        if randint(0,2) == 0:
+##            self.rise(cells,dimx,dimy)
+##        else:
+##            self.diffuse(cells, dimx, dimy)
 
 class Steam(Gas):
     name = "Steam"
@@ -283,6 +302,13 @@ class SawOil(Liquid):
     color = (100, 50, 30)
     flammability = 15
 
+class SagaagGas(Gas):
+    name = "sagaaggas"
+    color = (12,234,45)
+    flammability = 15
+    def update(self, cells, dimx, dimy):
+        self.diffuse(cells, dimy, dimx)
+
 
 material_dict = {
 "0":Sand,
@@ -294,7 +320,8 @@ material_dict = {
 "6":SawGas,
 "7":Fire,
 "8":Smoke,
-"9":SawOil
+"9":SawOil,
+"10":SagaagGas
     }
 
 num_materials = len(material_dict)
