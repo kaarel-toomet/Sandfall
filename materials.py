@@ -304,10 +304,22 @@ class SawOil(Liquid):
 
 class SagaagGas(Gas):
     name = "sagaaggas"
-    color = (12,234,45)
+    color = (12, 234, 45)
     flammability = 15
     def update(self, cells, dimx, dimy):
         self.diffuse(cells, dimy, dimx)
+
+class ExplosiveGas(Gas):
+    name = "sagaaggas"
+    color = (200, 200, 57)
+    flammability = 100
+    def update(self, cells, dimx, dimy):
+        self.diffuse(cells, dimy, dimx)
+        self.diffuse(cells, dimy, dimx)
+        self.diffuse(cells, dimy, dimx)
+        self.diffuse(cells, dimy, dimx)
+        self.diffuse(cells, dimy, dimx)
+
 
 
 material_dict = {
@@ -321,7 +333,8 @@ material_dict = {
 "7":Fire,
 "8":Smoke,
 "9":SawOil,
-"10":SagaagGas
+"10":SagaagGas,
+"11":ExplosiveGas,
     }
 
 num_materials = len(material_dict)
