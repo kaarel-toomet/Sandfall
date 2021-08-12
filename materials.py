@@ -90,8 +90,9 @@ class Liquid(Material):
 class Gas(Material):
     def update(self, cells, dimx, dimy):
         self.move(cells, dimy, dimx)
+        #return
 
-    def move(self, cells, dimy, dimx):
+    def rise(self, cells, dimy, dimx):
         x, y = self.x, self.y
         cell_7 = get_cell(x-1, y-1, cells, dimx, dimy)      #789
         cell_8 = get_cell(x, y-1, cells, dimx, dimy)        #4 6
@@ -128,6 +129,23 @@ class Gas(Material):
             
         elif empty[6]:
             self.x += 1
+    def diffuse(self, cells, dimx, dimy):
+        x, y = self.x, self.y
+        cell_2 = get_cell(x, y+1, cells, dimx, dimy)      #789
+        cell_4 = get_cell(x-1, y, cells, dimx, dimy)      #4 6
+        cell_6 = get_cell(x+1, y, cells, dimx, dimy)      #123
+        cell_8 = get_cell(x, y-1, cells, dimx, dimy)
+        empty = [False,False,cell_2 == 0, False, cell_4 == 0, False, cell_6 == 0, False, cell_8 == 0]
+        
+        if empty[2] and randint(0,3) == 0:
+            self.y += 1
+        elif empty[4] and randint(0,2) == 0:
+            self.x -= 1
+        elif empty[6] and randint(0,1) == 0:
+            self.x += 1
+        elif empty[8]:
+            self.y -= 1
+
 
 class Solid(Material):
     
@@ -143,7 +161,7 @@ class Sand(Powder):
 class Sawdust(Powder):
     name = "sawdust"
     color = (255, 255, 200)
-    flammability = 7
+    flammability = 10
 
 class Wall(Solid):
     name = "wood"
@@ -163,13 +181,17 @@ class Water(Liquid):
 class SawGas(Gas):
     name = "sawgas"
     color = (0, 100, 0)
-    flammability = 20
+    flammability = 100
+    def update(self, cells, dimx, dimy):
+        if randint(0,2) == 0:
+            self.rise(cells,dimx,dimy)
+        else:
+            self.diffuse(cells, dimx, dimy)
 
 class Steam(Gas):
     name = "Steam"
     color = (100, 150, 255)
     flammability = 0
-
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -177,7 +199,7 @@ class Steam(Gas):
 
     def update(self, cells, dimx, dimy):
         self.condensate(cells, dimx, dimy)
-        self.move(cells, dimy, dimx)
+        self.rise(cells, dimy, dimx)
 
     def condensate(self, cells, dimx, dimy):
         self.life += 1
@@ -210,12 +232,52 @@ class Fire(Solid):
                 cells.remove(cell)
                 cells.append(Steam(cell.x, cell.y))
             elif randint(0, 100) < cell.flammability:
-                cells.remove(cell)
-                fire = Fire(cell.x, cell.y)
-                fire.life = -100 / cell.flammability
-                cells.append(fire)
+                self.burn(cell.x, cell.y, cells, dimx, dimy)
                 
-                
+    def burn(self, x, y, cells, dimx, dimy):
+        o = 0
+        cell = get_cell(x, y, cells, dimx, dimy)
+        for dx in range(-1,2):
+            for dy in range(-1,2):
+                if get_cell(x+dx, y+dy, cells, dimx, dimy) == 0:
+                    o += 1
+        if o == 0: return
+        for dx in range(-1,2):
+            for dy in range(-1,2):
+                if get_cell(x+dx, y+dy, cells, dimx, dimy) == 0:
+                    if randint(0,o) == 0:
+                        
+                        cells.remove(cell)
+                        fire = Fire(x, y)
+                        fire.life = -100 / cell.flammability
+                        smoke = Smoke(x+dx, y+dy)
+                        smoke.life = -500 / cell.flammability
+                        cells.append(fire)
+                        cells.append(smoke)
+                        return
+
+class Smoke(Gas):
+    name = "smoke"
+    color = (50, 50, 50)
+    flammability = 0
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.life = randint(-200, -100)
+        
+    def update(self, cells, dimx, dimy):
+        self.extinguish(cells, dimx, dimy)
+        self.rise(cells, dimy, dimx)
+        
+    def extinguish(self, cells, dimx, dimy):
+        self.life += 1
+        if 0 < self.life:
+            cells.remove(get_cell(self.x, self.y, cells, dimx, dimy))
+
+class Oil(Liquid):
+    name = "oil"
+    color = (100, 50, 30)
+    flammability = 15
 
 
 material_dict = {
@@ -226,7 +288,9 @@ material_dict = {
 "4":Water,
 "5":Steam,
 "6":SawGas,
-"7":Fire
+"7":Fire,
+"8":Smoke,
+"9":Oil
     }
 
 num_materials = len(material_dict)
