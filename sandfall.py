@@ -86,8 +86,10 @@ def main(dimx, dimy, cellsize):
                 pygame.quit()
                 return
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
+                if event.key == pygame.K_SPACE:
                     PAUSED = not PAUSED
+                if event.key == pygame.K_RETURN:
+                    PAUSED = -1
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if pygame.mouse.get_pressed() == (0, 1, 0):
                     if line_start == (-1, -1):
@@ -113,6 +115,9 @@ def main(dimx, dimy, cellsize):
         if PAUSED < 1:
             for cell in cells:
                 cell.update(cells, dimx, dimy)
+
+        if PAUSED == -1:
+            PAUSED = 1
 
         if pygame.mouse.get_pressed() == (1, 0, 0):
             pos = pygame.mouse.get_pos()
