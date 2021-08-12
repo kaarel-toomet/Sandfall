@@ -1,7 +1,7 @@
 from random import randint
 
 col_selected = (255, 100, 100)
-squares_x, squares_y, square_size = (30, 30, 20)
+squares_x, squares_y, square_size = (32, 32, 20)
 
 
 
@@ -17,7 +17,7 @@ class Material:
         
 class Powder(Material):
     def update(self, cells, dimx, dimy):
-        self.move(cells, dimy, dimx)
+        self.move(cells, dimx, dimy)
     
     def move(self, cells, dimx, dimy):
         x, y = self.x, self.y
@@ -47,9 +47,9 @@ class Powder(Material):
 
 class Liquid(Material):
     def update(self, cells, dimx, dimy):
-        self.move(cells, dimy, dimx)
+        self.move(cells, dimx, dimy)
 
-    def move(self, cells, dimy, dimx):
+    def move(self, cells, dimx, dimy):
         x, y = self.x, self.y
         cell_1 = get_cell(x-1, y+1, cells, dimx, dimy)      #789
         cell_2 = get_cell(x, y+1, cells, dimx, dimy)        #4 6
@@ -89,10 +89,10 @@ class Liquid(Material):
 
 class Gas(Material):
     def update(self, cells, dimx, dimy):
-        self.rise(cells, dimy, dimx)
+        self.rise(cells, dimx, dimy)
         #return
 
-    def rise(self, cells, dimy, dimx):
+    def rise(self, cells, dimx, dimy):
         x, y = self.x, self.y
         cell_7 = get_cell(x-1, y-1, cells, dimx, dimy)      #789
         cell_8 = get_cell(x, y-1, cells, dimx, dimy)        #4 6
@@ -183,7 +183,7 @@ class Sawdust(Powder):
     flammability = 10
 
 class Wall(Solid):
-    name = "wood"
+    name = "wall"
     color = (100, 100, 100)
     flammability = 0
 
@@ -218,7 +218,7 @@ class Steam(Gas):
 
     def update(self, cells, dimx, dimy):
         self.condensate(cells, dimx, dimy)
-        self.rise(cells, dimy, dimx)
+        self.rise(cells, dimx, dimy)
 
     def condensate(self, cells, dimx, dimy):
         self.life += 1
@@ -238,7 +238,7 @@ class Fire(Gas):
 
     def update(self, cells, dimx, dimy):
         self.extinguish(cells, dimx, dimy)
-        self.spread(cells, dimy, dimx)
+        self.spread(cells, dimx, dimy)
         if randint(0,10) == 0: self.diffuse(cells, dimx, dimy)
 
     def extinguish(self, cells, dimx, dimy):
@@ -290,7 +290,7 @@ class Smoke(Gas):
         
     def update(self, cells, dimx, dimy):
         self.extinguish(cells, dimx, dimy)
-        self.rise(cells, dimy, dimx)
+        self.rise(cells, dimx, dimy)
         
     def extinguish(self, cells, dimx, dimy):
         self.life += 1
@@ -307,20 +307,101 @@ class SagaagGas(Gas):
     color = (12, 234, 45)
     flammability = 15
     def update(self, cells, dimx, dimy):
-        self.diffuse(cells, dimy, dimx)
+        self.diffuse(cells, dimx, dimy)
 
 class ExplosiveGas(Gas):
-    name = "sagaaggas"
+    name = "explosivegas"
     color = (200, 200, 57)
     flammability = 100
     def update(self, cells, dimx, dimy):
-        self.diffuse(cells, dimy, dimx)
-        self.diffuse(cells, dimy, dimx)
-        self.diffuse(cells, dimy, dimx)
-        self.diffuse(cells, dimy, dimx)
-        self.diffuse(cells, dimy, dimx)
+        self.diffuse(cells, dimx, dimy)
+        self.diffuse(cells, dimx, dimy)
+        self.diffuse(cells, dimx, dimy)
+        self.diffuse(cells, dimx, dimy)
+        self.diffuse(cells, dimx, dimy)
+        if randint(0,2) == 0 and get_cell(self.x, self.y+1, cells, dimx, dimy) == 0: self.y += 1
 
+class NonExist(Liquid):
+    name = "nonexist"
+    color = (180, 180, 180)
+    flammability = 0
+    
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.life = 10
+        
+    def update(self, cells, dimx, dimy):
+        self.move(cells, dimx, dimy)
+        if self.delete(cells, dimx, dimy) == 0:
+            if self.life < 0: cells.remove(self)
+            else: self.evaporate(cells, dimx, dimy)
 
+    def delete(self, cells, dimx, dimy):
+        for cell in get_nearby_cells(self.x, self.y, cells):
+            if cell.name == "nonexist": continue
+            if cell.name == "nonexistgas": continue
+            if cell.name == "wall": continue
+            if cell.name == "fire":
+                vapor = NonExistGas(self.x, self.y)
+                vapor.life = self.life
+                
+                cells.append(vapor)
+                cells.remove(self)
+                return 1
+            if randint(0,5) == 0:
+                cells.remove(cell)
+                self.life -= 1
+        return 0
+    def evaporate(self, cells, dimx, dimy):
+        if randint(0,50) == 0:
+            vapor = NonExistGas(self.x, self.y)
+            vapor.life = self.life
+            cells.remove(self)
+            cells.append(vapor)
+    
+
+class NonExistGas(Gas):
+    name = "nonexistgas"
+    color = (170, 160, 160)
+    flammability = 0
+    
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.life = 10
+        
+    def update(self, cells, dimx, dimy):
+        self.diffuse(cells, dimx, dimy)
+        if self.delete(cells, dimx, dimy) == 0:
+            if self.life < 0: cells.remove(self)
+            else: self.condense(cells, dimx, dimy)
+            
+
+    def delete(self, cells, dimx, dimy):
+        for cell in get_nearby_cells(self.x, self.y, cells):
+            if cell.name == "nonexist": continue
+            if cell.name == "nonexistgas": continue
+            if cell.name == "wall": continue
+            if cell.name == "water":
+                condensate = NonExist(self.x, self.y)
+                condensate.life = self.life
+                cells.remove(self)
+                cells.append(condensate)
+                return 1
+            if randint(0,5) == 0:
+                cells.remove(cell)
+                self.life -= 1
+        return 0
+                
+    def condense(self, cells, dimx, dimy):
+        if randint(0,50) == 0:
+            condensate = NonExist(self.x, self.y)
+            condensate.life = self.life
+            cells.remove(self)
+            cells.append(condensate)
+
+                
 
 material_dict = {
 "0":Sand,
@@ -335,6 +416,8 @@ material_dict = {
 "9":SawOil,
 "10":SagaagGas,
 "11":ExplosiveGas,
+"12":NonExist,
+"13":NonExistGas
     }
 
 num_materials = len(material_dict)
