@@ -207,7 +207,7 @@ class Steam(Gas):
             cells.remove(get_cell(self.x, self.y, cells, dimx, dimy))
             cells.append(Water(self.x, self.y))
 
-class Fire(Solid):
+class Fire(Gas):
     name = "fire"
     color = (255, 100, 0)
     flammability = 0
@@ -220,11 +220,15 @@ class Fire(Solid):
     def update(self, cells, dimx, dimy):
         self.extinguish(cells, dimx, dimy)
         self.spread(cells, dimy, dimx)
+        if randint(0,10) == 0: self.diffuse(cells, dimx, dimy)
 
     def extinguish(self, cells, dimx, dimy):
         self.life += 1
         if 0 < self.life:
             cells.remove(get_cell(self.x, self.y, cells, dimx, dimy))
+            smoke = Smoke(self.x, self.y)
+            smoke.life = randint(-200,100)
+            cells.append(smoke)
 
     def spread(self, cells, dimx, dimy):
         for cell in get_nearby_cells(self.x, self.y, cells):
@@ -250,10 +254,10 @@ class Fire(Solid):
                         cells.remove(cell)
                         fire = Fire(x, y)
                         fire.life = -100 / cell.flammability
-                        smoke = Smoke(x+dx, y+dy)
-                        smoke.life = -500 / cell.flammability
+                        f2 = Fire(x+dx, y+dy)
+                        f2.life = -500 / cell.flammability
                         cells.append(fire)
-                        cells.append(smoke)
+                        cells.append(f2)
                         return
 
 class Smoke(Gas):
@@ -274,8 +278,8 @@ class Smoke(Gas):
         if 0 < self.life:
             cells.remove(get_cell(self.x, self.y, cells, dimx, dimy))
 
-class Oil(Liquid):
-    name = "oil"
+class SawOil(Liquid):
+    name = "sawoil"
     color = (100, 50, 30)
     flammability = 15
 
@@ -290,7 +294,7 @@ material_dict = {
 "6":SawGas,
 "7":Fire,
 "8":Smoke,
-"9":Oil
+"9":SawOil
     }
 
 num_materials = len(material_dict)

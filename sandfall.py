@@ -138,7 +138,7 @@ def main(dimx, dimy, cellsize):
 
         if line_start != (-1, -1):
             pygame.draw.circle(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), 10)
-            pygame.draw.line(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), (pygame.mouse.get_pos()[0] // cellsize * cellsize, pygame.mouse.get_pos()[1] // cellsize * cellsize))
+            pygame.draw.line(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), (pygame.mouse.get_pos()[0] // cellsize * cellsize + cellsize*0.5, pygame.mouse.get_pos()[1] // cellsize * cellsize + cellsize*0.5))
 
         draw_materials(surface, material_dict, material_size, selected, dimx * cellsize)
             
