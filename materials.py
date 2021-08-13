@@ -458,7 +458,7 @@ class SawGoop(Liquid):
 
     def update(self, cells, dimx, dimy):
         for c in get_nearby_cells(self.x, self.y, cells):
-            if c.state in ("solid", "powder", "1"): return
+            if c.state in ("solid", "powder"): return
         self.move(cells, dimx, dimy)
 
 
