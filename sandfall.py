@@ -99,7 +99,7 @@ def main(dimx, dimy, cellsize):
                         line_end = pygame.mouse.get_pos()
                         line_end = (line_end[0] // cellsize, line_end[1] // cellsize)
                         for pos in get_line(line_start, line_end):
-                            if get_cell(pos[0], pos[1], cells, dimy, dimx) == 0:
+                            if get_cell(pos[0], pos[1], cells, dimy, dimx).state == "":
                                 cells.append(material_dict[str(selected)](pos[0], pos[1]))
                         line_start = (-1, -1)
                     #print(line_start)
@@ -122,14 +122,14 @@ def main(dimx, dimy, cellsize):
         if pygame.mouse.get_pressed() == (1, 0, 0):
             pos = pygame.mouse.get_pos()
             pos = (pos[0] // cellsize, pos[1] // cellsize)
-            if get_cell(pos[0], pos[1], cells, dimy, dimx) == 0:
+            if get_cell(pos[0], pos[1], cells, dimy, dimx).state == "":
                 cells.append(material_dict[str(selected)](pos[0], pos[1]))
             #print(pos)
         elif pygame.mouse.get_pressed() == (0, 0, 1):
             pos = pygame.mouse.get_pos()
             pos = (pos[0] // cellsize, pos[1] // cellsize)
             cell = get_cell(pos[0], pos[1], cells, dimy, dimx)
-            if cell != 0 and cell != 1:
+            if cell.state not in ("", "1"):
                 cells.remove(cell)
         
         for cell in cells:
@@ -138,7 +138,7 @@ def main(dimx, dimy, cellsize):
 
         if line_start != (-1, -1):
             pygame.draw.circle(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), 10)
-            pygame.draw.line(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), (pygame.mouse.get_pos()[0] // cellsize * cellsize + cellsize*0.5, pygame.mouse.get_pos()[1] // cellsize * cellsize + cellsize*0.5))
+            pygame.draw.line(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), ((pygame.mouse.get_pos()[0] // cellsize + 0.5) * cellsize, (pygame.mouse.get_pos()[1] // cellsize + 0.5) * cellsize))
 
         draw_materials(surface, material_dict, material_size, selected, dimx * cellsize)
             
