@@ -207,14 +207,39 @@ class Gas(Material):
         cell_8 = get_cell(x, y-1, cells, dimx, dimy)
         empty = [False,False,cell_2 == 0, False, cell_4 == 0, False, cell_6 == 0, False, cell_8 == 0]
         
-        if empty[2] and randint(0,3) == 0:
-            self.y += 1
-        elif empty[4] and randint(0,2) == 0:
-            self.x -= 1
-        elif empty[6] and randint(0,1) == 0:
-            self.x += 1
-        elif empty[8]:
-            self.y -= 1
+##        if empty[2] and randint(0,3) == 0:
+##            self.y += 1
+##        elif empty[4] and randint(0,2) == 0:
+##            self.x -= 1
+##        elif empty[6] and randint(0,1) == 0:
+##            self.x += 1
+##        elif empty[8]:
+##            self.y -= 1
+        c = 3
+        if empty[2]:
+            if randint(0,c) == 0:
+                self.y += 1
+                return
+            else:
+                c -= 1
+        if empty[4]:
+            if randint(0,c) == 0:
+                self.x -= 1
+                return
+            else:
+                c -= 1
+        if empty[6]:
+            if randint(0,c) == 0:
+                self.x += 1
+                return
+            else:
+                c -= 1
+        if empty[8]:
+            if randint(0,c) == 0:
+                self.y -= 1
+                return
+            else:
+                c -= 1
 
 
 class Fire(Material):
@@ -256,8 +281,10 @@ class Fire(Material):
         
         for cell in get_nearby_cells(self.x, self.y, cells):
             if cell.name == "water":
+                cells.remove(self)
                 cells.remove(cell)
                 cells.append(Steam(cell.x, cell.y))
+                return
             elif randint(0, 100) < cell.flammability:
                 
                 self.burn(cell.x, cell.y, cells, dimx, dimy)
@@ -355,7 +382,7 @@ class Steam(Gas):
             cells.append(Water(self.x, self.y))
 
 class PowderFire(Fire, Powder):
-    name = "fire"
+    name = "powderfire"
     color = (255, 100, 0)
     flammability = 0
 
@@ -365,12 +392,12 @@ class PowderFire(Fire, Powder):
         self.move(cells, dimx, dimy)
 
 class SolidFire(Fire, Solid):
-    name = "fire"
+    name = "solidfire"
     color = (255, 100, 0)
     flammability = 0
 
 class LiquidFire(Fire, Liquid):
-    name = "fire"
+    name = "liquidfire"
     color = (255, 100, 0)
     flammability = 0
 
@@ -380,9 +407,14 @@ class LiquidFire(Fire, Liquid):
         self.move(cells, dimx, dimy)
 
 class GasFire(Fire, Gas):
-    name = "fire"
+    name = "gasfire"
     color = (255, 100, 0)
     flammability = 0
+
+    def update(self, cells, dimx, dimy):
+        self.extinguish(cells, dimx, dimy)
+        self.spread(cells, dimx, dimy)
+        self.move(cells, dimx, dimy)
     
 
 class Smoke(Gas):
