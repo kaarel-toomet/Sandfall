@@ -14,10 +14,10 @@ def init(dimx, dimy):
 
     return cells
 
-def draw_materials(surface, materials, material_size, selected, offset):
-    pygame.draw.rect(surface, col_selected, (offset, selected * material_size, material_size, material_size))
+def draw_materials(surface, materials, material_size, selected, offset, ysize):
+    pygame.draw.rect(surface, col_selected, (offset + material_size*(material_size*selected//ysize), (selected * material_size)%(ysize), material_size, material_size))
     for key in material_dict:
-        pygame.draw.rect(surface, material_dict[key].color, (offset + 5, int(key) * material_size + 5, material_size - 10, material_size - 10))
+        pygame.draw.rect(surface, material_dict[key].color, (offset + 5 + material_size*(material_size*int(key)//ysize), (int(key) * material_size + 5)%(ysize), material_size - 10, material_size - 10))
 
 def get_line(start, end): # not mine
     x1, y1 = start
@@ -66,7 +66,7 @@ def get_line(start, end): # not mine
 
 def main(dimx, dimy, cellsize):
     pygame.init()
-    surface = pygame.display.set_mode((dimx * cellsize + material_size, max(dimy * cellsize, material_size * num_materials)))
+    surface = pygame.display.set_mode((dimx * cellsize - (num_materials // -(dimy * cellsize // material_size)) * material_size, dimy * cellsize))
     pygame.display.set_caption("Sand fall")
     clock = pygame.time.Clock()
 
@@ -105,8 +105,10 @@ def main(dimx, dimy, cellsize):
                     #print(line_start)
                 elif pygame.mouse.get_pressed() == (1, 0, 0):
                     mouse_x, mouse_y = pygame.mouse.get_pos()
-                    if dimx * cellsize < mouse_x < dimx * cellsize + material_size and 0 < mouse_y < material_size * num_materials:
-                        selected = mouse_y//material_size
+                    #if dimx * cellsize < mouse_x < dimx * cellsize + material_size*(material_size*int(key)//ysize) and 0 < mouse_y < min(dimy * cellsize, material_size * num_materials):
+                    s = mouse_y//material_size  +  (int(mouse_x - dimx * cellsize) // material_size) * dimy * cellsize // material_size
+                    if 0 <= s < num_materials:
+                        selected = s
                         #print(selected, material_dict[str(selected)].name)
         
         surface.fill(col_background)
@@ -141,7 +143,7 @@ def main(dimx, dimy, cellsize):
             pygame.draw.line(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), ((pygame.mouse.get_pos()[0] // cellsize + 0.5) * cellsize, (pygame.mouse.get_pos()[1] // cellsize + 0.5) * cellsize))
 
 
-        draw_materials(surface, material_dict, material_size, selected, dimx * cellsize)
+        draw_materials(surface, material_dict, material_size, selected, dimx * cellsize, dimy * cellsize)
             
         pygame.display.update()
 
