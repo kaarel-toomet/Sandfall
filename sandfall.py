@@ -3,16 +3,13 @@ from materials import *
 import numpy as np
 from random import randint
 
-col_background = (200, 200, 200)
-col_empty = (0, 0, 0)
-material_size = 50
-UPS = 20
 PAUSED = 0
 
 def init(dimx, dimy):
+    cells_grid = np.zeros((dimy, dimx), dtype="O")
     cells = []
 
-    return cells
+    return (cells, cells_grid)
 
 def draw_materials(surface, materials, material_size, selected, offset):
     pygame.draw.rect(surface, col_selected, (offset, selected * material_size, material_size, material_size))
@@ -70,7 +67,7 @@ def main(dimx, dimy, cellsize):
     pygame.display.set_caption("Sand fall")
     clock = pygame.time.Clock()
 
-    cells = init(dimx, dimy)
+    cells, cells_grid = init(dimx, dimy)
 
     line_start = (-1, -1)
 
@@ -99,22 +96,20 @@ def main(dimx, dimy, cellsize):
                         line_end = pygame.mouse.get_pos()
                         line_end = (line_end[0] // cellsize, line_end[1] // cellsize)
                         for pos in get_line(line_start, line_end):
-                            if get_cell(pos[0], pos[1], cells, dimy, dimx).state == "":
-                                cells.append(material_dict[str(selected)](pos[0], pos[1]))
+                            if get_cell(pos[0], pos[1], cells_grid, dimy, dimx).state == "":
+                                set_cell(pos[0], pos[1], cells, cells_grid, material_dict[str(selected)](pos[0], pos[1]))
                         line_start = (-1, -1)
-                    #print(line_start)
                 elif pygame.mouse.get_pressed() == (1, 0, 0):
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     if dimx * cellsize < mouse_x < dimx * cellsize + material_size and 0 < mouse_y < material_size * num_materials:
                         selected = mouse_y//material_size
-                        #print(selected, material_dict[str(selected)].name)
         
         surface.fill(col_background)
         pygame.draw.rect(surface, col_empty, (0, 0, dimx * cellsize, dimy * cellsize))
 
         if PAUSED < 1:
             for cell in cells:
-                cell.update(cells, dimx, dimy)
+                cell.update(cells, cells_grid, dimx, dimy)
 
         if PAUSED == -1:
             PAUSED = 1
@@ -122,15 +117,15 @@ def main(dimx, dimy, cellsize):
         if pygame.mouse.get_pressed() == (1, 0, 0):
             pos = pygame.mouse.get_pos()
             pos = (pos[0] // cellsize, pos[1] // cellsize)
-            if get_cell(pos[0], pos[1], cells, dimy, dimx).state == "":
-                cells.append(material_dict[str(selected)](pos[0], pos[1]))
+            if get_cell(pos[0], pos[1], cells_grid, dimy, dimx).state == "":
+                set_cell(pos[0], pos[1], cells, cells_grid, material_dict[str(selected)](pos[0], pos[1]))
             #print(pos)
         elif pygame.mouse.get_pressed() == (0, 0, 1):
             pos = pygame.mouse.get_pos()
             pos = (pos[0] // cellsize, pos[1] // cellsize)
-            cell = get_cell(pos[0], pos[1], cells, dimy, dimx)
+            cell = get_cell(pos[0], pos[1], cells_grid, dimy, dimx)
             if cell.state not in ("", "1"):
-                cells.remove(cell)
+                remove_cell(cell, cells, cells_grid)
         
         for cell in cells:
             col = cell.color
@@ -143,6 +138,13 @@ def main(dimx, dimy, cellsize):
         draw_materials(surface, material_dict, material_size, selected, dimx * cellsize)
             
         pygame.display.update()
+
+        for cell in cells:
+            if get_cell(cell.x, cell.y, cells_grid, dimx, dimy) != cell:
+                print(cell.x, cell.y, "is wrong!")
+                print(cells_grid)
+                while True:
+                    throwexception()
 
 if __name__ == "__main__":
     main(squares_x, squares_y, square_size)
