@@ -134,7 +134,7 @@ def main(dimx, dimy, cellsize):
             pygame.draw.rect(surface, col, (cell.x*cellsize, cell.y*cellsize, cellsize-1, cellsize-1))
 
         if line_start != (-1, -1):
-            pygame.draw.circle(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), 10)
+            pygame.draw.circle(surface, col_selected, (int((line_start[0]+0.5) * cellsize), int((line_start[1]+0.5) * cellsize)), 10)
             pygame.draw.line(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), ((pygame.mouse.get_pos()[0] // cellsize + 0.5) * cellsize, (pygame.mouse.get_pos()[1] // cellsize + 0.5) * cellsize))
 
 

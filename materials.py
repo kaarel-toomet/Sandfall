@@ -292,12 +292,15 @@ class Fire(Material):
                 set_cell(self.x, self.y, cells, cells_grid, Smoke(cell.x, cell.y))
                 set_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
 
-                #return 1
+            
             elif randint(0, 100) < cell.flammability:
-                self.burn(cell.x, cell.y, cells, dimx, dimy)
+                
+                self.burn(cell.x, cell.y, cells, cells_grid, dimx, dimy)
+            #print(cell)
+                
         #return 0
                 
-    def burn(self, x, y, cells, dimx, dimy):
+    def burn(self, x, y, cells, cells_grid, dimx, dimy):
         
         o = 0
         cell = get_cell(x, y, cells_grid, dimx, dimy)
@@ -305,7 +308,7 @@ class Fire(Material):
             for dy in range(-1,2):
                 if get_cell(x+dx, y+dy, cells_grid, dimx, dimy).state == "":
                     o += 1
-                    #print(o)
+                    
         if o == 0: return
         for dx in range(-1,2):
             for dy in range(-1,2):
@@ -524,7 +527,7 @@ def get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
     results = []
     for i in range(x-1, x+2):
         for j in range(y-1, y+2):
-            if 0 <= x+i < dimx and 0 <= x+j < dimy:
+            if 0 <= i < dimx and 0 <= j < dimy:
                 results.append(get_cell(i, j, cells_grid, dimx, dimy))
     #for c in cells:
     #    if c.x in range(x-1, x+2) and c.y in range(y-1, y+2)
