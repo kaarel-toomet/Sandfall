@@ -14,6 +14,7 @@ class Material:
         self.x = x
         self.y = y
         self.life = 0
+        self.amount = 1
     
     def update(self, cells, cells_grid, dimx, dimy):
         return
@@ -33,58 +34,70 @@ class Powder(Material):
     
     def update(self, cells, cells_grid, dimx, dimy):
         self.move(cells, cells_grid, dimx, dimy)
+        
+    def can_move(self,cell):
+        if cell.state in ("", "liquid", "gas"): return True
+        elif cell.name == self.name and cell.amount < self.amount: return True
+        else: return False
     
     def move(self, cells, cells_grid, dimx, dimy):
         x, y = self.x, self.y
+        for n in get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
+            if n.name == self.name:
+                ta = n.amount + self.amount
+                n.amount = min(1,ta)
+                self.amount = max(0,ta-1)
+        
+        
         cell_1 = get_cell(x-1, y+1, cells_grid, dimx, dimy)      #789
         cell_2 = get_cell(x, y+1, cells_grid, dimx, dimy)        #4 6
         cell_3 = get_cell(x+1, y+1, cells_grid, dimx, dimy)      #123
         cell_4 = get_cell(x-1, y, cells_grid, dimx, dimy)
         cell_6 = get_cell(x+1, y, cells_grid, dimx, dimy)
-        empty = [False, cell_1.state == "", cell_2.state == "", cell_3.state == "", cell_4.state == "", False, cell_6.state == ""]
-        fluid = [False, cell_1.state in ("liquid", "gas"), cell_2.state in ("liquid", "gas"), cell_3.state in ("liquid", "gas"), cell_4.state in ("liquid", "gas"), False, cell_6.state in ("liquid", "gas")]
+        empty = [False, self.can_move(cell_1), self.can_move(cell_2), self.can_move(cell_3), self.can_move(cell_4), False, self.can_move(cell_6)]
+##        fluid = [False, cell_1.state in ("liquid", "gas"), cell_2.state in ("liquid", "gas"), cell_3.state in ("liquid", "gas"), cell_4.state in ("liquid", "gas"), False, cell_6.state in ("liquid", "gas")]
 
         if empty[2]:
-            move_cell(0, 1, cells_grid, self)
+            move_cell(0, 1, cells_grid, self, dimx, dimy)
 
         elif empty[1] and empty[3] and empty[4] and empty[6]:
             if randint(0, 1) == 0:
-                move_cell(-1, 1, cells_grid, self)
+                move_cell(-1, 1, cells_grid, self, dimx, dimy)
             else:
-                move_cell(1, 1, cells_grid, self)
+                move_cell(1, 1, cells_grid, self, dimx, dimy)
         elif empty[1] and empty[4]:
-            move_cell(-1, 1, cells_grid, self)
+            move_cell(-1, 1, cells_grid, self, dimx, dimy)
                 
         elif empty[3] and empty[6]:
-            move_cell(+1, 1, cells_grid, self)
+            move_cell(+1, 1, cells_grid, self, dimx, dimy)
 
-        elif fluid[2]:
-            move_cell(0, 1, cells_grid, self)
-            cells_grid[self.y - 1, self.x] = cell_2
-            cell_2.y -= 1
-
-        elif fluid[1] and fluid[3] and (fluid[4] or empty[4]) and (fluid[6] or empty[6]):
-            if randint(0, 1) == 0:
-                move_cell(-1, 1, cells_grid, self)
-                cells_grid[self.y - 1, self.x + 1] = cell_1
-                cell_1.x += 1
-                cell_1.y -= 1
-            else:
-                move_cell(1, 1, cells_grid, self)
-                cells_grid[self.y - 1, self.x - 1] = cell_3
-                cell_3.x -= 1
-                cell_3.y -= 1
-        elif fluid[1] and (fluid[4] or empty[4]):
-            move_cell(-1, 1, cells_grid, self)
-            cells_grid[self.y - 1, self.x + 1] = cell_1
-            cell_1.x += 1
-            cell_1.y -= 1
-                
-        elif fluid[3] and (fluid[6] or empty[6]):
-            move_cell(1, 1, cells_grid, self)
-            cells_grid[self.y - 1, self.x - 1] = cell_3
-            cell_3.x -= 1
-            cell_3.y -= 1
+##        elif fluid[2]:
+##            move_cell(0, 1, cells_grid, self, dimx, dimy)
+##            cells_grid[self.y - 1, self.x] = cell_2
+##            cell_2.y -= 1
+##
+##        elif fluid[1] and fluid[3] and (fluid[4] or empty[4]) and (fluid[6] or empty[6]):
+##            if randint(0, 1) == 0:
+##                move_cell(-1, 1, cells_grid, self, dimx, dimy)
+##                cells_grid[self.y - 1, self.x + 1] = cell_1
+##                cell_1.x += 1
+##                cell_1.y -= 1
+##            else:
+##                move_cell(1, 1, cells_grid, self, dimx, dimy)
+##                cells_grid[self.y - 1, self.x - 1] = cell_3
+##                cell_3.x -= 1
+##                cell_3.y -= 1
+##        elif fluid[1] and (fluid[4] or empty[4]):
+##            move_cell(-1, 1, cells_grid, self, dimx, dimy)
+##            cells_grid[self.y - 1, self.x + 1] = cell_1
+##            cell_1.x += 1
+##            cell_1.y -= 1
+##                
+##        elif fluid[3] and (fluid[6] or empty[6]):
+##            move_cell(1, 1, cells_grid, self, dimx, dimy)
+##            cells_grid[self.y - 1, self.x - 1] = cell_3
+##            cell_3.x -= 1
+##            cell_3.y -= 1
         
 
 class Solid(Material):
@@ -97,75 +110,93 @@ class Liquid(Material):
     def update(self, cells, cells_grid, dimx, dimy):
         self.move(cells, cells_grid, dimx, dimy)
 
+    def can_move(self,cell):
+        if cell.state in ("", "gas"): return True
+        #elif cell.name == self.name and cell.amount < self.amount: return True
+        else: return False
+        
     def move(self, cells, cells_grid, dimx, dimy):
         x, y = self.x, self.y
+        for n in get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
+            if n.name == self.name:
+                ta = n.amount + self.amount
+                n.amount = min(1,ta)
+                self.amount = max(0,ta-1)
+        
+        if  self.amount < 0.1: return
+        
+        
         cell_1 = get_cell(x-1, y+1, cells_grid, dimx, dimy)      #789
         cell_2 = get_cell(x, y+1, cells_grid, dimx, dimy)        #4 6
         cell_3 = get_cell(x+1, y+1, cells_grid, dimx, dimy)      #123
         cell_4 = get_cell(x-1, y, cells_grid, dimx, dimy)
         cell_6 = get_cell(x+1, y, cells_grid, dimx, dimy)
-        empty = [False, cell_1.state == "", cell_2.state == "", cell_3.state == "", cell_4.state == "", False, cell_6.state == ""]
-        gas = [False, cell_1.state == "gas", cell_2.state == "gas", cell_3.state == "gas", cell_4.state == "gas", False, cell_6.state == "gas"]
-
+        empty = [False, self.can_move(cell_1), self.can_move(cell_2), self.can_move(cell_3), self.can_move(cell_4), False, self.can_move(cell_6)]
+        
         if empty[2]:
-            move_cell(0, 1, cells_grid, self)
+            move_cell(0, 1, cells_grid, self, dimx, dimy)
 
-        elif empty[1] and empty[3] and empty[4] and empty[6]:
-            if randint(0, 1) == 0:
-                move_cell(-1, 1, cells_grid, self)
-            else:
-                move_cell(1, 1, cells_grid, self)
-        elif empty[1] and empty[4]:
-            move_cell(-1, 1, cells_grid, self)
-                
-        elif empty[3] and empty[6]:
-            move_cell(1, 1, cells_grid, self)
+##        elif empty[1] and empty[3] and empty[4] and empty[6]:
+##            if randint(0, 1) == 0:
+##                move_cell(-1, 1, cells_grid, self, dimx, dimy)
+##            else:
+##                move_cell(1, 1, cells_grid, self, dimx, dimy)
+##        elif empty[1] and empty[4]:
+##            move_cell(-1, 1, cells_grid, self, dimx, dimy)
+##                
+##        elif empty[3] and empty[6]:
+##            move_cell(1, 1, cells_grid, self, dimx, dimy)
 
         elif empty[4] and empty[6]:
             if randint(0,1):
-                move_cell(1, 0, cells_grid, self)
+                move_cell(1, 0, cells_grid, self, dimx, dimy)
             else:
-                move_cell(-1, 0, cells_grid, self)
+                move_cell(-1, 0, cells_grid, self, dimx, dimy)
             
         elif empty[4]:
-            move_cell(-1, 0, cells_grid, self)
+            move_cell(-1, 0, cells_grid, self, dimx, dimy)
             
         elif empty[6]:
-            move_cell(1, 0, cells_grid, self)
+            move_cell(1, 0, cells_grid, self, dimx, dimy)
 
-        elif gas[2]:
-            move_cell(0, 1, cells_grid, self)
-            cells_grid[self.y - 1, self.x] = cell_2
-            cell_2.y -= 1
-
-        elif gas[1] and gas[3] and gas[4] and gas[6]:
-            if randint(0, 1) == 0:
-                move_cell(-1, 1, cells_grid, self)
-                cells_grid[self.y - 1, self.x + 1] = cell_1
-                cell_1.x += 1
-                cell_1.y -= 1
-            else:
-                move_cell(1, 1, cells_grid, self)
-                cells_grid[self.y - 1, self.x - 1] = cell_3
-                cell_3.x -= 1
-                cell_3.y -= 1
-        elif gas[1] and gas[4]:
-            move_cell(-1, 1, cells_grid, self)
-            cells_grid[self.y - 1, self.x + 1] = cell_1
-            cell_1.x += 1
-            cell_1.y -= 1
-                
-        elif gas[3] and gas[6]:
-            move_cell(1, 1, cells_grid, self)
-            cells_grid[self.y - 1, self.x - 1] = cell_3
-            cell_3.x -= 1
-            cell_3.y -= 1
+##        elif gas[2]:
+##            move_cell(0, 1, cells_grid, self, dimx, dimy)
+##            cells_grid[self.y - 1, self.x] = cell_2
+##            cell_2.y -= 1
+##
+##        elif gas[1] and gas[3] and gas[4] and gas[6]:
+##            if randint(0, 1) == 0:
+##                move_cell(-1, 1, cells_grid, self, dimx, dimy)
+##                cells_grid[self.y - 1, self.x + 1] = cell_1
+##                cell_1.x += 1
+##                cell_1.y -= 1
+##            else:
+##                move_cell(1, 1, cells_grid, self, dimx, dimy)
+##                cells_grid[self.y - 1, self.x - 1] = cell_3
+##                cell_3.x -= 1
+##                cell_3.y -= 1
+##        elif gas[1] and gas[4]:
+##            move_cell(-1, 1, cells_grid, self, dimx, dimy)
+##            cells_grid[self.y - 1, self.x + 1] = cell_1
+##            cell_1.x += 1
+##            cell_1.y -= 1
+##                
+##        elif gas[3] and gas[6]:
+##            move_cell(1, 1, cells_grid, self, dimx, dimy)
+##            cells_grid[self.y - 1, self.x - 1] = cell_3
+##            cell_3.x -= 1
+##            cell_3.y -= 1
 class Gas(Material):
     state = "gas"
     
     def update(self, cells, cells_grid, dimx, dimy):
         self.move(cells, cells_grid, dimx, dimy)
 
+    def can_move(self,cell):
+        if cell.state in (""): return True
+        elif cell.name == self.name and cell.amount < self.amount: return True
+        else: return False
+    
     def move(self, cells, cells_grid, dimx, dimy):
         x, y = self.x, self.y
         cell_7 = get_cell(x-1, y-1, cells_grid, dimx, dimy)      #789
@@ -173,32 +204,33 @@ class Gas(Material):
         cell_9 = get_cell(x+1, y-1, cells_grid, dimx, dimy)      #123
         cell_4 = get_cell(x-1, y, cells_grid, dimx, dimy)
         cell_6 = get_cell(x+1, y, cells_grid, dimx, dimy)
-        empty = [False, False, False, False, cell_4.state == "", False, cell_6.state == "", cell_7.state == "", cell_8.state == "", cell_9.state == ""]
+        empty = [False, False, False, False, self.can_move(cell_4), False, self.can_move(cell_6), self.can_move(cell_7), self.can_move(cell_8), self.can_move(cell_9)]
 
         if empty[8]:
-            move_cell(0, -1, cells_grid, self)
+            move_cell(0, -1, cells_grid, self, dimx, dimy)
 
         elif empty[7] and empty[9]:
             if randint(0, 1) == 0:
-                move_cell(-1, -1, cells_grid, self)
+                move_cell(-1, -1, cells_grid, self, dimx, dimy)
             else:
-                move_cell(1, -1, cells_grid, self)
+                move_cell(1, -1, cells_grid, self, dimx, dimy)
         elif empty[7]:
-            move_cell(-1, -1, cells_grid, self)
+            move_cell(-1, -1, cells_grid, self, dimx, dimy)
                 
         elif empty[9]:
-            move_cell(1, -1, cells_grid, self)
+            move_cell(1, -1, cells_grid, self, dimx, dimy)
 
         elif empty[4] and empty[6]:
             if randint(0,1):
-                move_cell(-1, 0, cells_grid, self)
+                move_cell(-1, 0, cells_grid, self, dimx, dimy)
             else:
-                move_cell(1, 0, cells_grid, self)
+                move_cell(1, 0, cells_grid, self, dimx, dimy)
             
         elif empty[4]:
-            move_cell(-1, 0, cells_grid, self)
+            move_cell(-1, 0, cells_grid, self, dimx, dimy)
             
         elif empty[6]:
+            move_cell(1, 0, cells_grid, self, dimx, dimy)
 ##<<<<<<< HEAD
 ##            self.x += 1
 ##    def diffuse(self, cells, dimx, dimy):
@@ -243,7 +275,7 @@ class Gas(Material):
 ##            else:
 ##                c -= 1
 ##=======
-            move_cell(1, 0, cells_grid, self)
+            #move_cell(1, 0, cells_grid, self, dimx, dimy)
 
 class Fire(Material):
     
@@ -251,10 +283,11 @@ class Fire(Material):
         self.x = x
         self.y = y
         self.life = randint(-200, -100)
+        self.amount = 1
         
     def update(self, cells, cells_grid, dimx, dimy):
-        self.extinguish(cells, cells_grid, dimx, dimy)
         self.spread(cells, cells_grid, dimx, dimy)
+        self.extinguish(cells, cells_grid, dimx, dimy)
 
     def extinguish(self, cells, cells_grid, dimx, dimy):
         self.life += 1
@@ -262,7 +295,7 @@ class Fire(Material):
             remove_cell(self, cells, cells_grid)
             smoke = Smoke(self.x,self.y)
             #cells.append(smoke)
-            set_cell(self.x, self.y, cells, cells_grid, smoke)
+            add_cell(self.x, self.y, cells, cells_grid, smoke)
             #return 1
         #return 0
 
@@ -289,29 +322,27 @@ class Fire(Material):
         
         for cell in get_nearby_cells(self.x, self.y, cells, cells_grid, dimx, dimy):
             if cell.name == "water":
-                set_cell(self.x, self.y, cells, cells_grid, Smoke(cell.x, cell.y))
-                set_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
+                add_cell(self.x, self.y, cells, cells_grid, Smoke(cell.x, cell.y))
+                add_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
 
                 #return 1
             elif randint(0, 100) < cell.flammability:
-                self.burn(cell.x, cell.y, cells, dimx, dimy)
+                self.burn(cell.x, cell.y, cells, cells_grid, dimx, dimy)
         #return 0
                 
-    def burn(self, x, y, cells, dimx, dimy):
-        
+    def burn(self, x, y, cells, cells_grid, dimx, dimy):
+        #print(34)
         o = 0
         cell = get_cell(x, y, cells_grid, dimx, dimy)
-        for dx in range(-1,2):
-            for dy in range(-1,2):
-                if get_cell(x+dx, y+dy, cells_grid, dimx, dimy).state == "":
-                    o += 1
-                    #print(o)
+        for c in get_nearby_cells(cell.x, cell.y, cells, cells_grid, dimx, dimy):
+            if c.state == "": o += 1
         if o == 0: return
         for dx in range(-1,2):
             for dy in range(-1,2):
                 if get_cell(x+dx, y+dy, cells_grid, dimx, dimy).state == "":
+                    #print(4)
                     if randint(0,o) == 0:
-                        
+                        #print(3)
                         cells.remove(cell)
                         if cell.state == "powder":
                             fire_type = PowderFire
@@ -332,8 +363,8 @@ class Fire(Material):
                             f2 = fire_type(cell.x + dx, cell.y + dy)
                             f2.life = -cell.burn_time
 
-                        set_cell(fire.x, fire.y, cells, cells_grid, fire)
-                        set_cell(f2.x, f2.y, cells, cells_grid, f2)
+                        add_cell(fire.x, fire.y, cells, cells_grid, fire)
+                        add_cell(f2.x, f2.y, cells, cells_grid, f2)
 ##                        cells.append(fire)
 ##                        cells.append(f2)
                         return
@@ -345,7 +376,7 @@ class Fire(Material):
 ##        for cell in get_nearby_cells(self.x, self.y, cells_grid, dimx, dimy):
 ##            if cell.name == "water":
 ##                remove_cell(cell, cells, cells_grid, dimx, dimy)
-##                set_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
+##                add_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
 ##            elif randint(0, 100) < cell.flammability:
 ##                remove_cell(cell, cells, cells_grid)
 ##                if cell.state == "powder":
@@ -358,7 +389,7 @@ class Fire(Material):
 ##                    fire_type = GasFire
 ##                fire = fire_type(cell.x, cell.y)
 ##                fire.life = cell.burn_time * -1
-##                set_cell(cell.x, cell.y, cells, cells_grid, fire)
+##                add_cell(cell.x, cell.y, cells, cells_grid, fire)
 
 
 class Sand(Powder):
@@ -408,16 +439,19 @@ class Steam(Gas):
         self.x = x
         self.y = y
         self.life = randint(-200, -100)
+        self.amount = 1
 
     def update(self, cells, cells_grid, dimx, dimy):
-        self.condense(cells, dimx, dimy)
         self.move(cells, cells_grid, dimx, dimy)
+        self.condense(cells, cells_grid, dimx, dimy)
+        
 
-    def condense(self, cells, dimx, dimy):
+    def condense(self, cells, cells_grid, dimx, dimy):
         self.life += 1
         if 0 < self.life:
-            remove_cell(get_cell(self.x, self.y, cells_grid, dimx, dimy), cells, cells_grid)
-            set_cell(cell.x, cell.y, cells, cells_grid, Water(cell.x, cell.y))
+            #remove_cell(get_cell(self.x, self.y, cells_grid, dimx, dimy), cells, cells_grid)
+            remove_cell(self, cells, cells_grid)
+            add_cell(self.x, self.y, cells, cells_grid, Water(self.x, self.y))
 
 class PowderFire(Fire, Powder):
     name = "powderfire"
@@ -426,8 +460,8 @@ class PowderFire(Fire, Powder):
 
     def update(self, cells, cells_grid, dimx, dimy):
         self.move(cells, cells_grid, dimx, dimy)
-        self.extinguish(cells, cells_grid, dimx, dimy)
         self.spread(cells, cells_grid, dimx, dimy)
+        self.extinguish(cells, cells_grid, dimx, dimy)
         
 
 class SolidFire(Fire, Solid):
@@ -442,8 +476,8 @@ class LiquidFire(Fire, Liquid):
 
     def update(self, cells, cells_grid, dimx, dimy):
         self.move(cells, cells_grid, dimx, dimy)
-        self.extinguish(cells, cells_grid, dimx, dimy)
         self.spread(cells, cells_grid, dimx, dimy)
+        self.extinguish(cells, cells_grid, dimx, dimy)
 
 class GasFire(Fire, Gas):
     name = "gasfire"
@@ -452,25 +486,27 @@ class GasFire(Fire, Gas):
 
     def update(self, cells, cells_grid, dimx, dimy):
         self.move(cells, cells_grid, dimx, dimy)
-        self.extinguish(cells, cells_grid, dimx, dimy)
         self.spread(cells, cells_grid, dimx, dimy)
+        self.extinguish(cells, cells_grid, dimx, dimy)
     
 
 class Smoke(Gas):
-    name = "smoke"
+    name = "anoxic air"
     color = (50, 50, 50)
     flammability = 0
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.life = randint(-200, -100)
+        self.amount = 1
         
     def update(self, cells, cells_grid, dimx, dimy):
-        self.extinguish(cells, cells_grid, dimx, dimy)
         self.move(cells, cells_grid, dimx, dimy)
+        self.extinguish(cells, cells_grid, dimx, dimy)
         
     def extinguish(self, cells, cells_grid, dimx, dimy):
-        self.life += 1
+        for n in get_nearby_cells(self.x, self.y, cells, cells_grid, dimx, dimy):
+            if n.name == "full": self.life += 1
         if 0 < self.life:
             remove_cell(self, cells, cells_grid)
 
@@ -484,6 +520,7 @@ class SawGoop(Liquid):
         self.x = x
         self.y = y
         self.life = randint(50, 100)
+        self.amount = 1
 
     def update(self, cells, cells_grid, dimx, dimy):
         for c in get_nearby_cells(self.x, self.y, cells, cells_grid, dimx, dimy):
@@ -530,7 +567,7 @@ def get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
     #    if c.x in range(x-1, x+2) and c.y in range(y-1, y+2)
     return(results)
 
-def set_cell(x, y, cells, cells_grid, cell):
+def add_cell(x, y, cells, cells_grid, cell):
     cells_grid[y, x] = cell
     cells.append(cell)
 
@@ -538,8 +575,17 @@ def remove_cell(cell, cells, cells_grid):
     cells.remove(cell)
     cells_grid[cell.y, cell.x] = 0
 
-def move_cell(x, y, cells_grid, cell):
-    cells_grid[cell.y, cell.x] = 0
+def move_cell(x, y, cells_grid, cell, dimx, dimy):
+    if cell.x+x < 0 or cell.x+x >= dimx or cell.y+y < 0 or cell.y+y >= dimy:
+        print("Bad movement",cell, cell.x, cell.y, cell.x+x, cell.y+y)
+        return
+    b = get_cell(cell.x+x, cell.y+y, cells_grid, dimx, dimy)
+    cells_grid[cell.y, cell.x] = b
+    if b.state not in ("", "1"):
+        b.x -= x
+        b.y -= y
+    #print("m",cell, cell.x, cell.y, cell.x+x, cell.y+y)
     cell.x += x
     cell.y += y
+    
     cells_grid[cell.y, cell.x] = cell

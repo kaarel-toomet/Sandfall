@@ -97,7 +97,7 @@ def main(dimx, dimy, cellsize):
                         line_end = (line_end[0] // cellsize, line_end[1] // cellsize)
                         for pos in get_line(line_start, line_end):
                             if get_cell(pos[0], pos[1], cells_grid, dimy, dimx).state == "":
-                                set_cell(pos[0], pos[1], cells, cells_grid, material_dict[str(selected)](pos[0], pos[1]))
+                                add_cell(pos[0], pos[1], cells, cells_grid, material_dict[str(selected)](pos[0], pos[1]))
                         line_start = (-1, -1)
                         
                 elif pygame.mouse.get_pressed() == (1, 0, 0):
@@ -120,7 +120,7 @@ def main(dimx, dimy, cellsize):
             pos = pygame.mouse.get_pos()
             pos = (pos[0] // cellsize, pos[1] // cellsize)
             if get_cell(pos[0], pos[1], cells_grid, dimy, dimx).state == "":
-                set_cell(pos[0], pos[1], cells, cells_grid, material_dict[str(selected)](pos[0], pos[1]))
+                add_cell(pos[0], pos[1], cells, cells_grid, material_dict[str(selected)](pos[0], pos[1]))
             #print(pos)
         elif pygame.mouse.get_pressed() == (0, 0, 1):
             pos = pygame.mouse.get_pos()
@@ -132,6 +132,15 @@ def main(dimx, dimy, cellsize):
         for cell in cells:
             col = cell.color
             pygame.draw.rect(surface, col, (cell.x*cellsize, cell.y*cellsize, cellsize-1, cellsize-1))
+            #if get_cell(cell.x, cell.y, cells_grid, dimx, dimy) != cell:
+            if cells_grid[cell.y, cell.x] != cell:
+                pygame.draw.line(surface, col_selected, (cell.x * cellsize, cell.y * cellsize), ((cell.x+1) * cellsize, (cell.y+1) * cellsize))
+
+                print(cell.x, cell.y, "is wrong!")
+                print(cells_grid)
+##                while True:
+##                    throwexception()
+                    
 
         if line_start != (-1, -1):
             pygame.draw.circle(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), 10)
@@ -142,12 +151,7 @@ def main(dimx, dimy, cellsize):
             
         pygame.display.update()
 
-        for cell in cells:
-            if get_cell(cell.x, cell.y, cells_grid, dimx, dimy) != cell:
-                print(cell.x, cell.y, "is wrong!")
-                print(cells_grid)
-                while True:
-                    throwexception()
+            
 
 if __name__ == "__main__":
     main(squares_x, squares_y, square_size)
