@@ -1,7 +1,7 @@
 from random import randint
 
 col_selected = (255, 100, 100)
-squares_x, squares_y, square_size = (30, 30, 20)
+squares_x, squares_y, square_size = (20, 20, 30)
 col_background = (200, 200, 200)
 col_empty = (0, 0, 0)
 material_size = 50
@@ -286,8 +286,8 @@ class Fire(Material):
         self.amount = 1
         
     def update(self, cells, cells_grid, dimx, dimy):
-        self.spread(cells, cells_grid, dimx, dimy)
-        self.extinguish(cells, cells_grid, dimx, dimy)
+        if self.spread(cells, cells_grid, dimx, dimy) == 0:
+            self.extinguish(cells, cells_grid, dimx, dimy)
 
     def extinguish(self, cells, cells_grid, dimx, dimy):
         self.life += 1
@@ -322,13 +322,20 @@ class Fire(Material):
         
         for cell in get_nearby_cells(self.x, self.y, cells, cells_grid, dimx, dimy):
             if cell.name == "water":
-                add_cell(self.x, self.y, cells, cells_grid, Smoke(cell.x, cell.y))
+                remove_cell(self, cells, cells_grid)
+                remove_cell(cell, cells, cells_grid)
+                add_cell(self.x, self.y, cells, cells_grid, Smoke(self.x, self.y))
                 add_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
+                
+                #print(self.x, self.y, cell.x, cell.y, self, cell, cells_grid[self.y, self.x], cells_grid[cell.y, cell.x])
+                #del cell
+                #del self
+                return 1
 
-                #return 1
+            
             elif randint(0, 100) < cell.flammability:
                 self.burn(cell.x, cell.y, cells, cells_grid, dimx, dimy)
-        #return 0
+        return 0
                 
     def burn(self, x, y, cells, cells_grid, dimx, dimy):
         #print(34)
@@ -459,9 +466,9 @@ class PowderFire(Fire, Powder):
     flammability = 0
 
     def update(self, cells, cells_grid, dimx, dimy):
-        self.move(cells, cells_grid, dimx, dimy)
-        self.spread(cells, cells_grid, dimx, dimy)
-        self.extinguish(cells, cells_grid, dimx, dimy)
+        if self.spread(cells, cells_grid, dimx, dimy) == 0:
+            self.move(cells, cells_grid, dimx, dimy)
+            self.extinguish(cells, cells_grid, dimx, dimy)
         
 
 class SolidFire(Fire, Solid):
@@ -475,9 +482,9 @@ class LiquidFire(Fire, Liquid):
     flammability = 0
 
     def update(self, cells, cells_grid, dimx, dimy):
-        self.move(cells, cells_grid, dimx, dimy)
-        self.spread(cells, cells_grid, dimx, dimy)
-        self.extinguish(cells, cells_grid, dimx, dimy)
+        if self.spread(cells, cells_grid, dimx, dimy) == 0:
+            self.move(cells, cells_grid, dimx, dimy)
+            self.extinguish(cells, cells_grid, dimx, dimy)
 
 class GasFire(Fire, Gas):
     name = "gasfire"
@@ -485,9 +492,9 @@ class GasFire(Fire, Gas):
     flammability = 0
 
     def update(self, cells, cells_grid, dimx, dimy):
-        self.move(cells, cells_grid, dimx, dimy)
-        self.spread(cells, cells_grid, dimx, dimy)
-        self.extinguish(cells, cells_grid, dimx, dimy)
+        if self.spread(cells, cells_grid, dimx, dimy) == 0:
+            self.move(cells, cells_grid, dimx, dimy)
+            self.extinguish(cells, cells_grid, dimx, dimy)
     
 
 class Smoke(Gas):
@@ -561,7 +568,7 @@ def get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
     results = []
     for i in range(x-1, x+2):
         for j in range(y-1, y+2):
-            if 0 <= x+i < dimx and 0 <= x+j < dimy:
+            if 0 <= i < dimx and 0 <= j < dimy:
                 results.append(get_cell(i, j, cells_grid, dimx, dimy))
     #for c in cells:
     #    if c.x in range(x-1, x+2) and c.y in range(y-1, y+2)
@@ -580,10 +587,13 @@ def move_cell(x, y, cells_grid, cell, dimx, dimy):
         print("Bad movement",cell, cell.x, cell.y, cell.x+x, cell.y+y)
         return
     b = get_cell(cell.x+x, cell.y+y, cells_grid, dimx, dimy)
-    cells_grid[cell.y, cell.x] = b
+    
     if b.state not in ("", "1"):
+        cells_grid[cell.y, cell.x] = b
         b.x -= x
         b.y -= y
+    elif b.state == "": cells_grid[cell.y, cell.x] = 0
+    else: print("dfadasdasdf")
     #print("m",cell, cell.x, cell.y, cell.x+x, cell.y+y)
     cell.x += x
     cell.y += y

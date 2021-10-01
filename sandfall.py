@@ -126,24 +126,31 @@ def main(dimx, dimy, cellsize):
             pos = pygame.mouse.get_pos()
             pos = (pos[0] // cellsize, pos[1] // cellsize)
             cell = get_cell(pos[0], pos[1], cells_grid, dimy, dimx)
+            
             if cell.state not in ("", "1"):
+                #print(cells, cell, cells_grid)
                 remove_cell(cell, cells, cells_grid)
         
         for cell in cells:
             col = cell.color
             pygame.draw.rect(surface, col, (cell.x*cellsize, cell.y*cellsize, cellsize-1, cellsize-1))
             #if get_cell(cell.x, cell.y, cells_grid, dimx, dimy) != cell:
+            #print(cell.x, cell.y, cell)
             if cells_grid[cell.y, cell.x] != cell:
-                pygame.draw.line(surface, col_selected, (cell.x * cellsize, cell.y * cellsize), ((cell.x+1) * cellsize, (cell.y+1) * cellsize))
+                #pygame.draw.line(surface, col_selected, (cell.x * cellsize, cell.y * cellsize), ((cell.x+1) * cellsize, (cell.y+1) * cellsize))
 
-                print(cell.x, cell.y, "is wrong!")
-                print(cells_grid)
+                print(cell.x, cell.y, cell, "is wrong!")
+                #print(cells_grid)
+                #cells_grid[cell.x, cell.y] = cell
+                #cells_grid[cell.y,cell.x] = 0
+                #del cell
+                
 ##                while True:
 ##                    throwexception()
                     
 
         if line_start != (-1, -1):
-            pygame.draw.circle(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), 10)
+            pygame.draw.circle(surface, col_selected, (int((line_start[0]+0.5) * cellsize), int((line_start[1]+0.5) * cellsize)), 10)
             pygame.draw.line(surface, col_selected, ((line_start[0]+0.5) * cellsize, (line_start[1]+0.5) * cellsize), ((pygame.mouse.get_pos()[0] // cellsize + 0.5) * cellsize, (pygame.mouse.get_pos()[1] // cellsize + 0.5) * cellsize))
 
 
