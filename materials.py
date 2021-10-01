@@ -1,7 +1,7 @@
 from random import randint
 
 col_selected = (255, 100, 100)
-squares_x, squares_y, square_size = (20, 20, 30)
+squares_x, squares_y, square_size = (30, 30, 20)
 col_background = (200, 200, 200)
 col_empty = (0, 0, 0)
 material_size = 50
