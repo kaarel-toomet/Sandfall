@@ -14,7 +14,7 @@ class Material:
         self.x = x
         self.y = y
         self.life = 0
-        self.amount = 1
+        self.amount = 1.0
     
     def update(self, cells, cells_grid, dimx, dimy):
         return
@@ -47,6 +47,9 @@ class Powder(Material):
                 ta = n.amount + self.amount
                 n.amount = min(1,ta)
                 self.amount = max(0,ta-1)
+                if self.amount <= 0:
+                    remove_cell(self, cells, cells_grid)
+                    return
         
         
         cell_1 = get_cell(x-1, y+1, cells_grid, dimx, dimy)      #789
@@ -108,7 +111,9 @@ class Liquid(Material):
     state = "liquid"
     
     def update(self, cells, cells_grid, dimx, dimy):
+        #print(self, self.x, self.y, self.amount)
         self.move(cells, cells_grid, dimx, dimy)
+        #print(self.x, self.y, self.amount)
 
     def can_move(self,cell):
         if cell.state in ("", "gas"): return True
@@ -118,11 +123,15 @@ class Liquid(Material):
     def move(self, cells, cells_grid, dimx, dimy):
         x, y = self.x, self.y
         for n in get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
-            if n.name == self.name:
+            if n.name == self.name and n != self:
+                #print(n, self)
                 ta = n.amount + self.amount
-                n.amount = min(1,ta)
-                self.amount = max(0,ta-1)
-        
+                self.amount = max(0.0, ta-1.0)
+                n.amount = min(1.0, ta)
+                
+        if self.amount <= 0.001:
+            remove_cell(self, cells, cells_grid)
+            return
         if  self.amount < 0.1: return
         
         
@@ -194,11 +203,22 @@ class Gas(Material):
 
     def can_move(self,cell):
         if cell.state in (""): return True
+        #elif cell.state == "gas" and cell.name != self.name: return True
         elif cell.name == self.name and cell.amount < self.amount: return True
         else: return False
     
     def move(self, cells, cells_grid, dimx, dimy):
         x, y = self.x, self.y
+        for n in get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
+            if n.name == self.name:
+                ta = n.amount + self.amount
+                n.amount = min(1,ta)
+                self.amount = max(0,ta-1)
+                if self.amount <= 0:
+                    remove_cell(self, cells, cells_grid)
+                    return
+
+        
         cell_7 = get_cell(x-1, y-1, cells_grid, dimx, dimy)      #789
         cell_8 = get_cell(x, y-1, cells_grid, dimx, dimy)        #4 6
         cell_9 = get_cell(x+1, y-1, cells_grid, dimx, dimy)      #123
@@ -283,7 +303,7 @@ class Fire(Material):
         self.x = x
         self.y = y
         self.life = randint(-200, -100)
-        self.amount = 1
+        self.amount = 1.0
         
     def update(self, cells, cells_grid, dimx, dimy):
         if self.spread(cells, cells_grid, dimx, dimy) == 0:
@@ -323,10 +343,13 @@ class Fire(Material):
         for cell in get_nearby_cells(self.x, self.y, cells, cells_grid, dimx, dimy):
             if cell.name == "water":
                 remove_cell(self, cells, cells_grid)
-                remove_cell(cell, cells, cells_grid)
-                add_cell(self.x, self.y, cells, cells_grid, Smoke(self.x, self.y))
-                add_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
+                #remove_cell(cell, cells, cells_grid)
                 
+                #add_cell(cell.x, cell.y, cells, cells_grid, Steam(cell.x, cell.y))
+                cell.amount -= 0.1
+                #print(cell.amount)
+                if cell.amount <= 0.001: remove_cell(cell, cells, cells_grid)
+                add_cell(self.x, self.y, cells, cells_grid, Steam(self.x, self.y))
                 #print(self.x, self.y, cell.x, cell.y, self, cell, cells_grid[self.y, self.x], cells_grid[cell.y, cell.x])
                 #del cell
                 #del self
@@ -446,7 +469,7 @@ class Steam(Gas):
         self.x = x
         self.y = y
         self.life = randint(-200, -100)
-        self.amount = 1
+        self.amount = 1.0
 
     def update(self, cells, cells_grid, dimx, dimy):
         self.move(cells, cells_grid, dimx, dimy)
@@ -458,7 +481,14 @@ class Steam(Gas):
         if 0 < self.life:
             #remove_cell(get_cell(self.x, self.y, cells_grid, dimx, dimy), cells, cells_grid)
             remove_cell(self, cells, cells_grid)
-            add_cell(self.x, self.y, cells, cells_grid, Water(self.x, self.y))
+            water = Water(self.x, self.y)
+            water.amount = 0.1
+            #print(water.amount)
+            add_cell(self.x, self.y, cells, cells_grid, water)
+            #print(434)
+            #water.amount = 1
+            return
+            
 
 class PowderFire(Fire, Powder):
     name = "powderfire"
@@ -498,7 +528,7 @@ class GasFire(Fire, Gas):
     
 
 class Smoke(Gas):
-    name = "anoxic air"
+    name = "smoke"
     color = (50, 50, 50)
     flammability = 0
     def __init__(self, x, y):
@@ -568,8 +598,8 @@ def get_nearby_cells(x, y, cells, cells_grid, dimx, dimy):
     results = []
     for i in range(x-1, x+2):
         for j in range(y-1, y+2):
-            if 0 <= i < dimx and 0 <= j < dimy:
-                results.append(get_cell(i, j, cells_grid, dimx, dimy))
+            #if 0 <= i < dimx and 0 <= j < dimy:
+            results.append(get_cell(i, j, cells_grid, dimx, dimy))
     #for c in cells:
     #    if c.x in range(x-1, x+2) and c.y in range(y-1, y+2)
     return(results)

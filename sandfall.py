@@ -128,7 +128,7 @@ def main(dimx, dimy, cellsize):
             cell = get_cell(pos[0], pos[1], cells_grid, dimy, dimx)
             
             if cell.state not in ("", "1"):
-                #print(cells, cell, cells_grid)
+                #print(cell.amount)
                 remove_cell(cell, cells, cells_grid)
         
         for cell in cells:
